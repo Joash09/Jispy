@@ -6,9 +6,9 @@
 
 CC=cc
 FLAGS=
-LDFLAGS=-leditline
+LDFLAGS=-leditline -lm
 
-SOURCES=prompt.c
+SOURCES=prompt.c mpc.c
 OBJS=$(SOURCES:.c=.o)
 TARGET=main
 

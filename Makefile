@@ -5,7 +5,7 @@
 # @version 0.1
 
 CC=cc
-FLAGS=
+FLAGS=-Wall
 LDFLAGS=-leditline -lm
 
 SOURCES=prompt.c mpc.c

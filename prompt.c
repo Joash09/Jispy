@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
 
         // Define Grammar
         mpca_lang(MPCA_LANG_DEFAULT, " \
-number: /-?[0-9]+/ ; \
+number: /-?[0-9]+(\\.[0-9]+)?/ ; \
 operator: '+' | '-' | '*' | '/' ; \
 expression: <number> | '(' <operator> <expression>+ ')' ; \
 lisps: /^/ <operator> <expression>+ /$/ ; \

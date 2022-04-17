@@ -14,4 +14,10 @@ Natural languages are build up of repeated substructures. Examples of these stru
 
 Personally, I feel like there is a resemblence to first order logic; a subject which I've been meaning to delve deeper into. 
 
+### Chapter 6
+
+Useful [https://regexone.com/problem/matching_decimal_numbers](resource) for Regex expressions 
+
+### Chapter 7
+
 

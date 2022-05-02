@@ -35,15 +35,15 @@ lisps: /^/ <expression>* /$/ ; \
 
     while(1) {
 
-        char* input = readline("j-lispy >");
+        char* input = readline("j-lispy > ");
         add_history(input);
 
         // Parse and evaluate input
         mpc_result_t* r;
         if (mpc_parse("<stdin>", input, Lisps, r)) {
-            lval* result = lval_read(r->output);
-            lval_println(result);
-            lval_del(result);
+            lval* input_lval = eval_sexpression(lval_read(r->output));
+            lval_println(input_lval);
+            lval_del(input_lval);
             mpc_ast_delete(r->output);
 
         } else {

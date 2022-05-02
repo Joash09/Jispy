@@ -86,9 +86,11 @@ enum LVAL_TYPE { LVAL_NUM, LVAL_ERROR, LVAL_SYM, LVAL_SEXPR };
 
 We could have also used a linked list (a lval object contains a pointer to next lval item) instead of a variable array.
 
-### General C Notes
+
+### General C Notes (mostly memory management XD)
 
 * Structs always has a fixed size (i.e. can't use a struct for a list)
 * Lists that can vary in size are represented by an address which points to the element of the first element within that list
-
 * When allocating memory for a string use sizeof(string)+1 to include the null terminating character
+* <em>memmove</em copies data from source to destination as if intermediate buffer used. This is useful in the case the source and destination memory addresses overlap (i.e moving array element to another position in array) since as the move function copies data to the destination it won't read values it has just written. Safer option than <em>memcopy</em>
+* When adding/removing elements from dynamic array remember to reallocate the memory according with <em>realloc</em>

@@ -29,12 +29,17 @@ void lval_del(lval* v);
 lval* lval_read_num(mpc_ast_t* t);
 lval* lval_read(mpc_ast_t* t);
 lval* lval_add(lval* a, lval* b);
+lval* builtin_op(lval* v, char* op);
 
 /* Evaluating Expressions */
-lval* eval(mpc_ast_t* t);
-lval* eval_op(lval x, lval y, char* op);
+lval* lval_eval(lval* t);
+lval* eval_sexpression(lval* t);
 
-/* Methods */
+/* S-Expression Evaluation helpers */
+lval* lval_pop(lval* v, int i);
+lval* lval_take(lval* v, int i);
+
+/* Print Methods */
 void lval_print(lval* p);
 void lval_print_sexpr(lval* p);
 void lval_println(lval* p);

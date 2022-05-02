@@ -44,25 +44,26 @@ lval* lval_sexpr(void) {
 ** Destructor
 */
 void lval_del(lval* v) {
+  switch (v->type) {
+    /* Do nothing special for number type */
+    case LVAL_NUM: break;
 
-    switch(v -> type) {
-        case LVAL_NUM:
-            break;
-        case LVAL_ERROR: {
-            free(v->err);
-        } break;
-        case LVAL_SYM: {
-            free(v->sym);
-        } break;
-        case LVAL_SEXPR: {
-            for (int i = 0; i < v->count; i++) {
-                lval_del(v->cell[i]);
-            }
-            free(v->cell);
-        } break;
-    }
+    /* For Err or Sym free the string data */
+    case LVAL_ERROR: free(v->err); break;
+    case LVAL_SYM: free(v->sym); break;
 
-    free(v);
+    /* If Sexpr then delete all elements inside */
+    case LVAL_SEXPR:
+      for (int i = 0; i < v->count; i++) {
+        lval_del(v->cell[i]);
+      }
+      /* Also free the memory allocated to contain the pointers */
+      free(v->cell);
+    break;
+  }
+
+  /* Free the memory allocated for the "lval" struct itself */
+  free(v);
 }
 
 /*
@@ -125,48 +126,125 @@ lval* lval_add(lval* a, lval* b) {
 ** The second child is tagged operator (i.e. +)
 ** Third and Fourth child is tagged expression | number
 */
-/* lval* eval_sexpression(lval* t) { */
-/*     // Evaluate children */
-/*     for (int i = 0; i < t->count; i++) { */
-/*         t->cell[i] = lval_eval(t->cell[i]); */
-/*     } */
-/* } */
+lval* eval_sexpression(lval* t) {
 
-/* lval* eval(mpc_ast_t* t) { */
+    // Evaluate children
+    for (int i = 0; i < t->count; i++) {
+        t->cell[i] = lval_eval(t->cell[i]);
+    }
 
-/*     if (strstr(t->tag, "number")) { */
-/*         return lval_num(atof(t->contents)); */
-/*     } */
+    // Don't bother with the rest if there are any errors
+    for (int i = 0; i < t->count; i++) {
+        if (t->cell[i]->type == LVAL_ERROR) {
+            return lval_take(t, i);
+        }
+    }
 
-/*     // else is this has operators and expressions */
-/*     char *op = t->children[1]->contents; */
+    // Empty expression (i.e. '()')
+    if (t->count == 0) {
+        return t;
+    }
 
-/*     lval* x = eval(t->children[2]); */
+    // If there is only one expression; return only that one expression
+    if(t->count == 1) {
+        return lval_take(t, 0);
+    }
 
-/*     int i = 3; */
-/*     while(strstr(t->children[i]->tag, "expression")) { */
-/*         x = eval_op(x, eval(t->children[i]), op); */
-/*         i++; */
-/*     } */
+    // Ensure first element is a symbol
+    lval* f = lval_pop(t, 0);
+    if(f->type != LVAL_SYM) {
+        lval_del(f); lval_del(t);
+        return lval_error("S-Expression does not start with symbol");
+    }
 
-/*     return x; */
-/* } */
+    lval* result = builtin_op(t, f->sym);
+    lval_del(f);
+    return result;
+
+}
+
+lval* lval_eval(lval* t) {
+    if (t->type == LVAL_SEXPR) {
+        return eval_sexpression(t);
+    }
+    return t;
+}
+
+lval* builtin_op(lval* v, char* op) {
+
+    /* Ensure all children are numbers */
+    for (int i = 0; i < v->count; i++) {
+        if (v->cell[i]->type != LVAL_NUM) {
+            lval_del(v);
+            return lval_error("Cannot operate on a non-number");
+        }
+    }
+
+    lval* x = lval_pop(v, 0);
+
+    if((strcmp(op, "-") == 0) && v->count == 0) {
+        x->value = -x->value;
+    }
+
+    while(v->count > 0) {
+
+        lval* y = lval_pop(v, 0);
+
+        if (strcmp(op, "+") == 0) {
+            x->value += y->value;
+        }
+        if (strcmp(op, "-") == 0) {
+            x->value -= y->value;
+        }
+        if (strcmp(op, "*") == 0) {
+            x->value *= y->value;
+        }
+        if (strcmp(op, "/") == 0) {
+            if (y->value == 0) {
+                lval_del(x);
+                lval_del(y);
+                lval_error("Cannot divide by zero");
+                break;
+            }
+            x->value /= y->value;
+        }
+        if (strcmp(op, "^") == 0) {
+            x->value = pow(x->value, y->value);
+        }
+
+        lval_del(y);
+
+    }
+
+    lval_del(v);
+    return x;
+}
 
 
-/* lval* eval_op(lval x, lval y, char* op) { */
+/* Pop the child of lval at index i */
+lval* lval_pop(lval* v, int i) {
 
-/*     if(x.type == LVAL_ERROR) { return x; } */
-/*     if(y.type == LVAL_ERROR) { return y; } */
+    lval* x = v->cell[i];
 
-/*     if (strstr(op, "+")) { return lval_num(x.value + y.value); } */
-/*     if (strstr(op, "-")) { return lval_num(x.value - y.value); } */
-/*     if (strstr(op, "*")) { return lval_num(x.value * y.value); } */
-/*     if (strstr(op, "/")) { return y.value == 0 ? lval_error("Cannot divide by zero") : lval_num(x.value/y.value); } */
-/*     if (strstr(op, "^")) { return lval_num(pow(x.value, y.value)); } */
-/*     // if (strstr(op, "%")) { return modff(x, y); } */
-/*     // */
-/*     return lval_error("Unknown operator"); */
-/* } */
+    // Shifting the address of i+1 back to i
+    // We are shifting back size of lval struct in bytes multiplied by the rest of elements in array
+    memmove(&v->cell[i], &v->cell[i+1], sizeof(lval*)*(v->count-i-1));
+
+    // decrease count
+    v->count--;
+
+    // Resize the memory allocated to dynamic array
+    v->cell = realloc(v->cell, sizeof(lval*) * v->count);
+
+    return x;
+}
+
+/* Gets child element then deletes parent */
+lval* lval_take(lval* v, int i) {
+    lval* x = lval_pop(v, i);
+    lval_del(v);
+    return x;
+}
 
 /*
 ** Methods
@@ -175,20 +253,20 @@ void lval_print(lval* p) {
     switch(p->type) {
         case LVAL_NUM: {
             printf("%f", p->value);
+            break;
         }
-        break;
         case LVAL_ERROR: {
             printf("Error: %s", p->err);
+            break;
         }
-        break;
         case LVAL_SYM: {
             printf("%s", p->sym);
+            break;
         }
-        break;
         case LVAL_SEXPR: {
             lval_print_sexpr(p);
+            break;
         }
-        break;
     }
 }
 

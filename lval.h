@@ -14,13 +14,14 @@ typedef struct lval {
     struct lval** cell;
 } lval;
 
-enum LVAL_TYPE { LVAL_NUM, LVAL_ERROR, LVAL_SYM, LVAL_SEXPR };
+enum LVAL_TYPE { LVAL_NUM, LVAL_ERROR, LVAL_SYM, LVAL_SEXPR, LVAL_QEXPR };
 
 /* Constructors */
 lval* lval_num(float num);
 lval* lval_error(char* err);
 lval* lval_sym(char* s);
 lval* lval_sexpr(void);
+lval* lval_qexpr(void);
 
 /* Destructor */
 void lval_del(lval* v);
@@ -42,6 +43,7 @@ lval* lval_take(lval* v, int i);
 /* Print Methods */
 void lval_print(lval* p);
 void lval_print_sexpr(lval* p);
+void lval_print_qexpr(lval* p);
 void lval_println(lval* p);
 
 #endif // LVAL_H_

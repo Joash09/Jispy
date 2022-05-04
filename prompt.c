@@ -17,6 +17,7 @@ int main(int argc, char** argv) {
         mpc_parser_t* Number = mpc_new("number");
         mpc_parser_t* Symbol = mpc_new("symbol");
         mpc_parser_t* Sexpression = mpc_new("sexpression");
+        mpc_parser_t* Qexpression = mpc_new("qexpression");
         mpc_parser_t* Expression = mpc_new("expression");
         mpc_parser_t* Lisps = mpc_new("lisps"); // Overall rule for Lisp line
 
@@ -25,17 +26,18 @@ int main(int argc, char** argv) {
 number: /-?[0-9]+(\\.[0-9]+)?/ ; \
 symbol: '+' | '-' | '*' | '/' | '^' ; \
 sexpression: '(' <expression>* ')' ; \
-expression: <number> | <symbol> | <sexpression> ; \
+qexpression: '{' <expression>* '}' ; \
+expression: <number> | <symbol> | <sexpression> | <qexpression> ; \
 lisps: /^/ <expression>* /$/ ; \
         ",
-        Number, Symbol, Sexpression, Expression, Lisps);
+        Number, Symbol, Sexpression, Qexpression, Expression, Lisps);
 
     puts("Joash's Lisp (Jispy) Version 0.0.1");
     puts("Press Ctrl-C to exit");
 
     while(1) {
 
-        char* input = readline("j-lispy > ");
+        char* input = readline("jispy > ");
         add_history(input);
 
         // Parse and evaluate input
@@ -55,7 +57,7 @@ lisps: /^/ <expression>* /$/ ; \
 
     }
 
-    mpc_cleanup(5, Number, Symbol, Sexpression, Expression, Lisps);
+    mpc_cleanup(6, Number, Symbol, Sexpression, Qexpression, Expression, Lisps);
 
     return 0;
 

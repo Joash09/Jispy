@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define LVAL_ASSERT(args, cond, err)                \
+    if (!(cond)) { lval_del(args); return lval_error(err); }
+
 /*
 ** "Constructors"
  */
@@ -169,7 +172,7 @@ lval* eval_sexpression(lval* t) {
         return lval_error("S-Expression does not start with symbol");
     }
 
-    lval* result = builtin_op(t, f->sym);
+    lval* result = builtin(t, f->sym);
     lval_del(f);
     return result;
 
@@ -180,6 +183,32 @@ lval* lval_eval(lval* t) {
         return eval_sexpression(t);
     }
     return t;
+}
+
+lval* builtin(lval* v, char* func) {
+
+  if (strcmp("list", func) == 0) {
+    return builtin_list(v);
+  }
+  if (strcmp("head", func) == 0) {
+    return builtin_head(v);
+  }
+  if (strcmp("tail", func) == 0) {
+    return builtin_tail(v);
+  }
+  if (strcmp("join", func) == 0) {
+    return builtin_join(v);
+  }
+  if (strcmp("eval", func) == 0) {
+    return builtin_eval(v);
+  }
+  if (strstr("+-/*", func)) {
+    return builtin_op(v, func);
+  }
+
+  lval_del(v);
+  return lval_error("Unknown function");
+
 }
 
 lval* builtin_op(lval* v, char* op) {
@@ -232,6 +261,79 @@ lval* builtin_op(lval* v, char* op) {
     return x;
 }
 
+/* Take q-expression and return q-expression with first element */
+lval* builtin_head(lval* a) {
+
+    /* too many arguments */
+    LVAL_ASSERT(a, a->count == 1, "Function 'head' passed too many arguments");
+
+    /* not a q-expression */
+    LVAL_ASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'head' not a Q-Expression");
+
+    /* no child elements */
+    LVAL_ASSERT(a, a->cell[0]->count != 0, "Function 'head' passed {}!");
+
+    lval* v = lval_take(a, 0);
+
+    /* Delete elements not in the head */
+    while (v->count > 1) {
+        lval_del(lval_pop(v, 1));
+    }
+
+    return v;
+
+}
+
+/* Takes q-expression and return q-expression with first element removed */
+lval* builtin_tail(lval* a) {
+
+    LVAL_ASSERT(a, a->count == 1, "Function 'head' passed too many arguments");
+
+    LVAL_ASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'head' not a Q-Expression");
+
+    LVAL_ASSERT(a, a->cell[0]->count != 0, "Function 'tail' passed");
+
+    lval* v = lval_take(a, 0);
+    lval_del(lval_pop(v, 0));
+    return v;
+
+}
+
+/* Convert s-expression to q-expression */
+lval* builtin_list(lval* a) {
+    a->type = LVAL_QEXPR;
+    return a;
+}
+
+/* Joins q-expressions together */
+lval* builtin_join(lval* a) {
+
+    // Make sure all children are q-expressions
+    for(int i = 0; i < a->count; i++) {
+        LVAL_ASSERT(a, a->cell[i]->type == LVAL_QEXPR, "Function 'join' incorrect type");
+    }
+
+    lval* x = lval_pop(a, 0);
+    while(a->count) { // By popping we reduce count
+        x = lval_join(x, lval_pop(a, 0));
+    }
+
+    lval_del(a);
+    return x;
+
+}
+
+/* Evaluate q-expression */
+lval* builtin_eval(lval* a) {
+
+    LVAL_ASSERT(a, a->count == 1, "Function 'eval' passed too many arguments");
+    LVAL_ASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'eval' wrong type");
+
+    // Convert expression to s-expression then return evaluated result
+    lval* x = lval_take(a, 0);
+    x->type = LVAL_SEXPR;
+    return lval_eval(x);
+}
 
 /* Pop the child of lval at index i */
 lval* lval_pop(lval* v, int i) {
@@ -250,11 +352,24 @@ lval* lval_pop(lval* v, int i) {
 
     return x;
 }
-
+;
 /* Gets child element then deletes parent */
 lval* lval_take(lval* v, int i) {
     lval* x = lval_pop(v, i);
     lval_del(v);
+    return x;
+}
+
+/* Join 2 q-expressions */
+lval* lval_join(lval* x, lval* y) {
+
+    // For each cell in y; add it to x
+    while(y->count) {
+        x = lval_add(x, lval_pop(y, 0));
+    }
+
+    // Delete y
+    lval_del(y);
     return x;
 }
 

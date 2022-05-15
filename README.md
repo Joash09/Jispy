@@ -1,15 +1,15 @@
-# Creating my own Lisp language
+# 🖥 Creating my own Lisp language
 
-In an effort to learn how programming languages are actually designed, I stumbled across this free [https://buildyourownlisp.com](book) which I thought is worth replicating. This repo is a clone of this project with modifications from me where possible. 
+In an effort to learn how programming languages are actually designed, I stumbled across this [https://buildyourownlisp.com](resource) which I thought is worth replicating. This repo is a recreation of this project with modifications from me where possible. 
 
-# How to run
+# 🏃 How to run
 
 ``` sh
 make
 make run
 ```
 
-# Personal Notes
+# 📓 Personal Notes
 
 ### Chapter 5
 
@@ -86,11 +86,33 @@ enum LVAL_TYPE { LVAL_NUM, LVAL_ERROR, LVAL_SYM, LVAL_SEXPR };
 
 We could have also used a linked list (a lval object contains a pointer to next lval item) instead of a variable array.
 
+### Chapter 10: Quoted expressions
 
-### General C Notes (mostly memory management XD)
+One of the most talked about features of Lisp, which is that Lisp can treat code as data. Quoted expressions tell the interpreter not to evaluate the symbols, S-expressions etc. within a quoted expression. Quoted expressions do not exist in other Lisp implementations but they have <em>MACROS</em> (such as ') to tell the interpreter not to evaluate that list. Quoted expressions in this project are denoted with curly brackets "{}".
+
+Adding in builtin methods (map to keywords in language), to use on q-expressions: 
+
+* builtin_head: Return q-expression with only first element
+* builtin_tail: Returen q-expression with first element removed
+* builtin_list: Take s-expression and convert to q-expression
+* builtin_join: Joins q-expressions together
+* builtin_eval: Evaluate whatever is in the quoted expression
+
+* lval_join: Helper to builtin_join
+
+* builtin: calls the correct builtin function depending on symbol
+
+### General C Notes (mostly memory management 😆)
 
 * Structs always has a fixed size (i.e. can't use a struct for a list)
 * Lists that can vary in size are represented by an address which points to the element of the first element within that list
 * When allocating memory for a string use sizeof(string)+1 to include the null terminating character
-* <em>memmove</em copies data from source to destination as if intermediate buffer used. This is useful in the case the source and destination memory addresses overlap (i.e moving array element to another position in array) since as the move function copies data to the destination it won't read values it has just written. Safer option than <em>memcopy</em>
+* <em>memmove</em> copies data from source to destination as if intermediate buffer used. This is useful in the case the source and destination memory addresses overlap (i.e moving array element to another position in array) since as the move function copies data to the destination it won't read values it has just written. Safer option than <em>memcopy</em>
 * When adding/removing elements from dynamic array remember to reallocate the memory according with <em>realloc</em>
+
+* MACROS can be used to clean up code. Eg when throwing errors:
+
+```c
+#define LASSERT(args, cond, err) \
+if (!(cond)) { lval_del(args); return lval_error(err); } 
+```

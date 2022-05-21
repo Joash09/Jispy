@@ -92,8 +92,8 @@ lval* lval_read(mpc_ast_t* t) {
     // If empty line; create s-expression
     lval* x = NULL;
     if (strcmp(t->tag, ">") == 0) { x = lval_sexpr(); }
-    if (strcmp(t->tag, "sexpression")) { x = lval_sexpr(); }
-    if (strcmp(t->tag, "qexpression")) { x = lval_qexpr(); }
+    if (strstr(t->tag, "sexpression")) { x = lval_sexpr(); }
+    if (strstr(t->tag, "qexpression")) { x = lval_qexpr(); }
 
     // Handle the children of abstract syntax tree type
     for (int i = 0; i < t->children_num; i++) {

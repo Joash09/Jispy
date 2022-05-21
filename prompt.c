@@ -43,7 +43,7 @@ lisps: /^/ <expression>* /$/ ; \
         // Parse and evaluate input
         mpc_result_t* r;
         if (mpc_parse("<stdin>", input, Lisps, r)) {
-            lval* input_lval = eval_sexpression(lval_read(r->output));
+            lval* input_lval = lval_eval(lval_read(r->output));
             lval_println(input_lval);
             lval_del(input_lval);
             mpc_ast_delete(r->output);

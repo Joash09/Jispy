@@ -43,6 +43,8 @@ lval* builtin_tail(lval* a);
 lval* builtin_list(lval* a);
 lval* builtin_join(lval* a);
 lval* builtin_eval(lval* a);
+lval* builtin_len(lval* a);
+lval* builtin_init(lval* a);
 
 /* S-Expression Evaluation helpers */
 lval* lval_pop(lval* v, int i);

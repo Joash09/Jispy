@@ -202,6 +202,12 @@ lval* builtin(lval* v, char* func) {
   if (strcmp("eval", func) == 0) {
     return builtin_eval(v);
   }
+  if (strcmp("len", func) == 0) {
+      return builtin_len(v);
+  }
+  if (strcmp("init", func) == 0) {
+      return builtin_init(v);
+  }
   if (strstr("+-/*", func)) {
     return builtin_op(v, func);
   }
@@ -335,6 +341,27 @@ lval* builtin_eval(lval* a) {
     return lval_eval(x);
 }
 
+/* Return number of elements in Q-expression */
+lval* builtin_len(lval* a) {
+
+    LVAL_ASSERT(a, a->count == 1, "Function 'eval' passed too many arguments");
+    LVAL_ASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'eval' wrong type");
+
+    lval* result = lval_num(lval_pop(a, 0)->count);
+    lval_del(a);
+    return result;
+
+}
+
+/* Return all but last element of q-expression */
+lval* builtin_init(lval* a) {
+
+    lval* result = lval_take(a, 0);
+    lval_del(lval_pop(result, result->count-1));
+    return result;
+
+}
+
 /* Pop the child of lval at index i */
 lval* lval_pop(lval* v, int i) {
 
@@ -352,7 +379,7 @@ lval* lval_pop(lval* v, int i) {
 
     return x;
 }
-;
+
 /* Gets child element then deletes parent */
 lval* lval_take(lval* v, int i) {
     lval* x = lval_pop(v, i);

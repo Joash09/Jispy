@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
         // Define Grammar
         mpca_lang(MPCA_LANG_DEFAULT, " \
 number: /-?[0-9]+(\\.[0-9]+)?/ ; \
-symbol: '+' | '-' | '*' | '/' | '^' | \"list\" | \"head\" | \"tail\" | \"join\" | \"eval\" ; \
+symbol: '+' | '-' | '*' | '/' | '^' | \"list\" | \"head\" | \"tail\" | \"join\" | \"eval\" | \"len\" | \"init\" ; \
 sexpression: '(' <expression>* ')' ; \
 qexpression: '{' <expression>* '}' ; \
 expression: <number> | <symbol> | <sexpression> | <qexpression> ; \

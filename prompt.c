@@ -11,6 +11,7 @@
 
 static char input[2048]; // Global input buffer
 
+
 int main(int argc, char** argv) {
 
         // Define Parsers
@@ -35,6 +36,9 @@ lisps: /^/ <expression>* /$/ ; \
     puts("Joash's Lisp (Jispy) Version 0.0.1");
     puts("Press Ctrl-C to exit");
 
+    lenv* e = lenv_new();
+    lenv_add_builtins(e);
+
     while(1) {
 
         char* input = readline("jispy > ");
@@ -43,7 +47,7 @@ lisps: /^/ <expression>* /$/ ; \
         // Parse and evaluate input
         mpc_result_t* r;
         if (mpc_parse("<stdin>", input, Lisps, r)) {
-            lval* input_lval = lval_eval(lval_read(r->output));
+            lval* input_lval = lval_eval(e, lval_read(r->output));
             lval_println(input_lval);
             lval_del(input_lval);
             mpc_ast_delete(r->output);
@@ -56,6 +60,8 @@ lisps: /^/ <expression>* /$/ ; \
         free(input);
 
     }
+
+    lenv_del(e);
 
     mpc_cleanup(6, Number, Symbol, Sexpression, Qexpression, Expression, Lisps);
 

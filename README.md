@@ -102,6 +102,47 @@ Adding in builtin methods (map to keywords in language), to use on q-expressions
 
 * builtin: calls the correct builtin function depending on symbol
 
+Additional methods by me:
+* builtin_len: Return number of elements in q-expression
+* builtin_init: Return all but last element in q-expression
+
+### Chapter 11: Variables
+
+See general notes on function pointers
+
+Add new lval type LVAL_FUN
+
+Created new function pointer <em>lbuiltin</em> which accepts lenv* and lval*
+
+```c
+typedef lval*(*lbuiltin)(lenv*, lval*);
+
+struct lval {
+    int type;
+
+    float value;
+    char* err;
+    char* sym;
+
+    lbuiltin fun;
+
+    int count; // Stores length of cell list
+    struct lval** cell;
+};
+```
+
+Add lval_copy function: returns new lval with same values of parameter
+
+Add lenv struct. Struct contains double array for symbols and lvals. This is how values and variable names will be mapped together. Two functions lenv_put and lenv_get to insert and return values from the env struct.
+
+lval_eval method depends on lenv
+
+All builtin functions require lenv (environment) to be passed to them. Created "wrapper" functions for the operator builtin functions so they can be passed as <em>lbuiltin</em> function pointer type.
+
+Remove builtin function which called builtin function depending on keyword/operator given. Instead builtin functions are registered individually with the environment with lenv_add_builtin which accepts function pointer for builtin functions.  lenv_add_builtin registers all the builtin functions with the environment.
+
+lenv is registered in main program
+
 ### General C Notes (mostly memory management 😆)
 
 * Structs always has a fixed size (i.e. can't use a struct for a list)
@@ -115,4 +156,30 @@ Adding in builtin methods (map to keywords in language), to use on q-expressions
 ```c
 #define LASSERT(args, cond, err) \
 if (!(cond)) { lval_del(args); return lval_error(err); } 
+```
+
+* typedef before any variable declaration means we can use name of variable as new type. 
+
+* We can read function pointer declarations as follows:
+```c
+typedef lval*(*lbuiltin)(lenv*, lval*)
+```
+To get lval* <em>dereference</em> lbuiltin and call with lenv* and lval* (i.e. lbuiltin is function pointer which takes lenv* and lval* and returns lval*)
+
+* Use forward declarations when dealing with cyclical types (e.g. function pointer foobar needs foo and bar but foobar is defined in foo)
+
+```c
+struct foo;
+struct bar;
+
+typedef struct foo;
+typedef struct bar;
+
+typedef foo*(*foobar)(foo*, bar*)
+
+struct foo {
+    
+    foobar x;
+    
+}
 ```
